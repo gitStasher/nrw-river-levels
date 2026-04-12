@@ -1,0 +1,12 @@
+{
+  "domain": "nrw_river_levels",
+  "name": "Natural Resources Wales - River Levels",
+  "version": "0.0.1",
+  "codeowners": [],
+  "dependencies": [],
+  "documentation": "https://github.com/gitStasher/nrw-river-levels/blob/main/README.md",
+  "issue_tracker": "https://github.com/gitStasher/nrw-river-levels/issues",
+  "requirements": [],
+  "config_flow": true,
+  "translation_language": "en"
+}

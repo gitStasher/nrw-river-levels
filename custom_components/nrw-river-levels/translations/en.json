@@ -1,0 +1,16 @@
+{
+  "title": "Natural Resources Wales - River Levels",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Natural Resources Wales - River Levels API Key",
+        "description": "Please enter your River Levels API Key from Natural Resources Wales",
+        "data": { "apiKey": "River Levels API Key" }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key - please check your key and try again",
+      "unknown": "Unexpected error"
+    }
+  }
+}
