@@ -5,6 +5,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import UnitOfLength
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import logging
+from datetime import datetime
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,15 +16,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities: list[SensorEntity] = []
     
     entities.append(RiverLevelSensor(coordinator))
+    entities.append(RiverLevelLastUpdatedSensor(coordinator))
     async_add_entities(entities)
     
 class RiverLevelSensor(CoordinatorEntity[NaturalResourcesWalesCoordinator], SensorEntity):
 
     def __init__(self, coordinator: NaturalResourcesWalesCoordinator) -> None:
 
-            super().__init__(coordinator)
-            self._attr_device_class = SensorDeviceClass.DISTANCE
-            self._attr_native_unit_of_measurement = UnitOfLength.METERS
+        super().__init__(coordinator)
+        self._attr_device_class = SensorDeviceClass.DISTANCE
+        self._attr_native_unit_of_measurement = UnitOfLength.METERS
 
     @property
     def unique_id(self):
@@ -42,6 +44,42 @@ class RiverLevelSensor(CoordinatorEntity[NaturalResourcesWalesCoordinator], Sens
 
     @property
     def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.coordinator.stationId)},
+            "name": self.coordinator.station,
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL
+        }
+
+class RiverLevelLastUpdatedSensor(CoordinatorEntity[NaturalResourcesWalesCoordinator], SensorEntity):
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator: NaturalResourcesWalesCoordinator) -> None:
+        super().__init__(coordinator)
+
+    @property
+    def unique_id(self) -> str:
+        return f"{DOMAIN}_{self.coordinator.stationId}_river_level_last_updated"
+
+    @property
+    def name(self) -> str:
+        return "River Level Last Updated"
+
+    @property
+    def native_value(self):
+        readings = self.coordinator.data.get("parameterReadings", [])
+        if not readings:
+            return None
+        time_str = readings[-1]["time"]
+        if not time_str:
+            return None
+        try:
+            return datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+        except Exception:
+            return None
+
+    @property
+    def device_info(self) -> dict:
         return {
             "identifiers": {(DOMAIN, self.coordinator.stationId)},
             "name": self.coordinator.station,
