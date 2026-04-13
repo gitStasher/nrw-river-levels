@@ -93,3 +93,51 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(config_entries.ConfigFlow, doma
                 title=station,
                 data={"apiKey": self.apiKey, "station": station, "stationId": stationId, "riverLevelParam": riverLevelParam})
 
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+
+        self._get_reauth_entry()
+        entry = self._get_reauth_entry()
+
+        schema = vol.Schema(
+                {
+                    vol.Required("apiKey"): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                            )
+                        )
+                    })
+
+        if user_input is None:
+            return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=schema)
+
+        self.apiKey = user_input["apiKey"]
+
+        async with aiohttp.ClientSession() as session:
+
+            headers = {"Ocp-Apim-Subscription-Key": self.apiKey}
+            
+            try:
+                
+                async with session.get(API_BASE_URL + API_STATIONDATA_EP, headers=headers) as response:
+                    
+                    errors = {}
+                    
+                    if response.status == 200:
+                        entry = self._get_reauth_entry()
+                        updated_data = {**entry.data, "apiKey": self.apiKey}
+                        self.async_update_reload_and_abort(entry, data=updated_data)
+                        return self.async_abort(reason="reauth_successful")
+                    elif response.status == 401:
+                        raise ValueError("invalid_auth")
+                    else:
+                        raise Exception("unknown")
+            
+            except Exception as e:
+                
+                errors = {"base": str(e)}
+                return self.async_show_form(step_id="reauth_confirm", data_schema=schema, errors=errors)

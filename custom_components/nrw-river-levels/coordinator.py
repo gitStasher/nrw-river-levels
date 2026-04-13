@@ -1,5 +1,6 @@
 from .const import DOMAIN, UPDATE_INTERVAL, API_BASE_URL, API_STATIONDATA_EP
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from datetime import timedelta
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import logging
@@ -28,5 +29,15 @@ class NaturalResourcesWalesCoordinator(DataUpdateCoordinator):
         
         url = f"{API_BASE_URL}{API_STATIONDATA_EP}/historical?location={self.stationId}&parameter={self.riverLevelParam}"
         session = async_get_clientsession(self.hass)
-        response = await session.get(url, headers={"Ocp-Apim-Subscription-Key": self.apiKey})
+        
+        try:
+            response = await session.get(url, headers={"Ocp-Apim-Subscription-Key": self.apiKey})
+        except Exception as err:
+            raise UpdateFailed(f"Request failed: {err}") from err
+        
+        if response.status == 401:
+            raise ConfigEntryAuthFailed("API key expired or invalid")
+        elif response.status != 200:
+            raise UpdateFailed(f"API request failed with status {response.status}")
+
         return await response.json()

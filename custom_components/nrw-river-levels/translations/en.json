@@ -6,11 +6,19 @@
         "title": "Natural Resources Wales - River Levels API Key",
         "description": "Please enter your River Levels API Key from Natural Resources Wales",
         "data": { "apiKey": "River Levels API Key" }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "Your API key has expired. Please re-enter it.",
+        "data": { "apiKey": "New River Levels API Key" }
       }
     },
     "error": {
       "invalid_auth": "Invalid API key - please check your key and try again",
       "unknown": "Unexpected error"
+    },
+    "abort": {
+       "reauth_successful": "Reauthentication successful. The integration for this config entry has been reloaded."
     }
   }
 }

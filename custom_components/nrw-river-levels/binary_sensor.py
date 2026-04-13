@@ -5,7 +5,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    await coordinator.async_config_entry_first_refresh()
     entities = []
     entities.append(StationStatusSensor(coordinator))
     async_add_entities(entities)
