@@ -1,8 +1,11 @@
 {
   "domain": "nrw_river_levels",
-  "name": "Natural Resources Wales - River Levels",
-  "version": "0.0.3",
-  "codeowners": [],
+  "name": "Natural Resources Wales",
+  "version": "0.0.4",
+  "codeowners": [
+  	"@gitStasher"
+  ],
+  "iot_class": "cloud_polling",
   "dependencies": [],
   "documentation": "https://github.com/gitStasher/nrw-river-levels/blob/main/README.md",
   "issue_tracker": "https://github.com/gitStasher/nrw-river-levels/issues",

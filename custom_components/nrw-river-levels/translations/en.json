@@ -1,24 +1,35 @@
 {
-  "title": "Natural Resources Wales - River Levels",
-  "config": {
-    "step": {
-      "user": {
-        "title": "Natural Resources Wales - River Levels API Key",
-        "description": "Please enter your River Levels API Key from Natural Resources Wales",
-        "data": { "apiKey": "River Levels API Key" }
-      },
-      "reauth_confirm": {
-        "title": "Re-authenticate",
-        "description": "Your API key has expired. Please re-enter it.",
-        "data": { "apiKey": "New River Levels API Key" }
-      }
-    },
-    "error": {
-      "invalid_auth": "Invalid API key - please check your key and try again",
-      "unknown": "Unexpected error"
-    },
-    "abort": {
-       "reauth_successful": "Reauthentication successful. The integration for this config entry has been reloaded."
+    "title": "Natural Resources Wales",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Natural Resources Wales",
+                "description": "Please select the type of API connection"
+            },
+            "reauth_confirm": {
+                "title": "Re-authentication required",
+                "description": "Your API key has expired. Please re-enter it.",
+                "data": { "api_key": "New River Levels API Key" }
+            },
+            "add_river_api": {
+                "title": "Authentication required",
+                "description": "Please enter your River Levels API Key",
+                "data": { "api_key": "River Levels API Key" }
+            },
+            "select_station": {
+                "title": "Select River Monitoring Station",
+                "description": "Please select the river station you wish to monitor. You can setup additional stations later if required."
+            }
+        },
+        "error": {
+            "invalid_auth": "API authentication failed using the API key you provided.",
+            "unknown": "Unexpected error",
+            "config_flow_failed": "An error occurred during setup. Please refer to the error logs for more information."
+        },
+        "abort": {
+            "reauth_successful": "Reauthentication successful. The integration for this config entry has been reloaded.",
+            "additional_station_added": "The new monitoring station was added successfully.",
+            "feature_not_implemented": "This feature is not yet implemented."
+        }
     }
-  }
 }
