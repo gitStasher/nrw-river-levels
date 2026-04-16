@@ -1,3 +1,4 @@
+from homeassistant.core import HomeAssistant
 from .const import DOMAIN, DEVICE_MANUFACTURER, DEVICE_MODEL
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -22,6 +23,7 @@ async def async_setup_entry(
     for station_id in entry.data.get("stations", []):
         entities.append(RiverLevelSensor(coordinator, station_id))
         entities.append(RiverLevelLastUpdatedSensor(coordinator, station_id))
+        entities.append(RiverLevelStatusSensor(coordinator, station_id))
     async_add_entities(entities)
 
 class RiverLevelSensor(
@@ -35,6 +37,7 @@ class RiverLevelSensor(
         self._attr_device_class = SensorDeviceClass.DISTANCE
         self._attr_native_unit_of_measurement = UnitOfLength.METERS
         self.station_id = station_id
+        self._attr_icon = None
 
     @property
     def unique_id(self):
@@ -50,6 +53,15 @@ class RiverLevelSensor(
             "parameters", []
         )
         param = params[0] if params else None
+        status = param.get("parameterStatusEN")
+
+        if status == "Level Rising":
+            self._attr_icon = "mdi:waves-arrow-up"
+        elif status == "Level Falling":
+            self._attr_icon = "mdi:wave-arrow-down"
+        else:
+            self._attr_icon = "mdi:waves"
+
         return float(param["latestValue"]) if param else None
 
     @property
@@ -93,8 +105,6 @@ class RiverLevelLastUpdatedSensor(
             "parameters", []
         )
         param = params[0] if params else None
-        if not param:
-            return None
         time_str = param.get("latestTime")
         if not time_str:
             return None
@@ -113,3 +123,54 @@ class RiverLevelLastUpdatedSensor(
             "manufacturer": DEVICE_MANUFACTURER,
             "model": DEVICE_MODEL
         }
+
+class RiverLevelStatusSensor(
+    CoordinatorEntity[NaturalResourcesWalesCoordinator],
+    SensorEntity
+):
+    def __init__(
+        self,
+        coordinator: NaturalResourcesWalesCoordinator,
+        station_id: int
+    ) -> None:
+        super().__init__(coordinator)
+        self._attr_device_class = SensorDeviceClass.ENUM
+        self._attr_native_unit_of_measurement = None
+        self.station_id = station_id
+        self._attr_icon = None
+
+    @property
+    def unique_id(self):
+        return f"{DOMAIN}_{self.station_id}_river_level_status"
+
+    @property
+    def name(self):
+        return "River Level Status"
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self.station_id)},
+            "name": (
+                self.coordinator.data["stations"][self.station_id]["titleEn"]
+            ),
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL
+        }
+
+    @property
+    def native_value(self):
+        params = self.coordinator.data["stations"][self.station_id].get(
+            "parameters", []
+        )
+        param = params[0] if params else None
+        status = param.get("parameterStatusEN")
+
+        if status == "Level Rising":
+            self._attr_icon = "mdi:waves-arrow-up"
+        elif status == "Level Falling":
+            self._attr_icon = "mdi:wave-arrow-down"
+        else:
+            self._attr_icon = "mdi:waves"
+
+        return status

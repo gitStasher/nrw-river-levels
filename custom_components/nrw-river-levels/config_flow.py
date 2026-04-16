@@ -15,6 +15,7 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
     domain=DOMAIN):
 
     VERSION = 2
+    MINOR_VERSION = 2
 
     def __init__(self):
         self.api_key = None
@@ -172,10 +173,10 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
 
                 for entry in current_entries:
                     if entry.data.get("api_key") == self.api_key:
-                        stations = entry.data["stations"]
-                        if station not in stations:
-                            stations.append(station)
-                        new_data = {**entry.data, "stations": stations}
+                        new_stations = list(entry.data.get("stations", []))
+                        if station not in new_stations:
+                            new_stations.append(station)
+                        new_data = {**entry.data, "stations": new_stations}
                         return self.async_update_reload_and_abort(
                             entry,
                             data=new_data,
@@ -242,6 +243,7 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                     self.async_update_reload_and_abort(
                         entry,
                         data=updated_data,
+                        title = f"River Levels ({self.api_key[-5:]})",
                     )
                     return self.async_abort(reason="reauth_successful")
                 elif response.status == 401:

@@ -1,7 +1,7 @@
 {
   "domain": "nrw_river_levels",
   "name": "Natural Resources Wales",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "codeowners": [
   	"@gitStasher"
   ],

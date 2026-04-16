@@ -1,5 +1,6 @@
 {
-  "name": "Natural Resources Wales - River Levels",
+  "name": "Natural Resources Wales",
   "render_readme": true,
-  "homeassistant": "2026.2.1"
+  "homeassistant": "2026.2.1",
+  "hide_default_branch": true
 }

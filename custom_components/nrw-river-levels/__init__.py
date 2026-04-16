@@ -1,4 +1,5 @@
 from homeassistant.core import HomeAssistant
+import homeassistant.helpers.device_registry as dr
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN
 from homeassistant.const import Platform
@@ -54,4 +55,35 @@ async def async_migrate_entry(
             version=2,
             title=title
         )
-    return True
+
+        return True
+
+    if config_entry.version == 2 and config_entry.minor_version == 1:
+        """This is to fix a regression where config entries would not save"""
+
+        dev_registry = dr.async_get(hass)
+        devices = dr.async_entries_for_config_entry(
+            dev_registry,
+            config_entry.entry_id
+        )
+
+        current_stations = set(config_entry.data.get("stations", []))
+        found_stations = set()
+
+        for device in devices:
+            for ident in device.identifiers:
+                if len(ident) >= 2 and ident[0] == DOMAIN and isinstance(
+                    ident[1], int
+                ):
+                    found_stations.add(ident[1])
+
+        new_stations = sorted(current_stations | found_stations)
+
+        hass.config_entries.async_update_entry(
+            config_entry,
+            data={**config_entry.data, "stations": new_stations},
+            version=2,
+            minor_version=2,
+        )
+        return True
+
