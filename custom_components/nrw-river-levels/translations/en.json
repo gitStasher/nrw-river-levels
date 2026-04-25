@@ -4,7 +4,11 @@
         "step": {
             "user": {
                 "title": "Natural Resources Wales",
-                "description": "Please select the type of API connection"
+                "description": "Please select the type of API connection",
+		"menu_options": {
+			"riverlevel": "River Level Sensor",
+			"floodalert": "Flood Alert Sensor"
+		}
             },
             "reauth_confirm": {
                 "title": "Re-authentication required",

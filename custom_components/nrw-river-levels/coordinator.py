@@ -1,5 +1,7 @@
 from .const import DOMAIN, UPDATE_INTERVAL, API_BASE_URL, API_STATIONDATA_EP
 from homeassistant.core import HomeAssistant
+from typing import Any
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed
@@ -8,9 +10,9 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from datetime import timedelta
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import logging
-import random
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class NaturalResourcesWalesCoordinator(DataUpdateCoordinator):
 

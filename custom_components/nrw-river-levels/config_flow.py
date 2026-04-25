@@ -1,18 +1,24 @@
 import voluptuous as vol
-from typing import Mapping, Any
+from typing import Mapping, Any, List, Dict
 from homeassistant.helpers import device_registry as dr
 from .errors import InvalidAuth, CannotConnect
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import selector
-from homeassistant import config_entries
+from homeassistant.config_entries import (
+    ConfigFlowResult,
+    ConfigFlow,
+)
+
 from .const import DOMAIN, API_BASE_URL, API_STATIONDATA_EP, RIVER_LEVEL
 import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class NaturalResourcesWalesRiverLevelsConfigFlow(
-    config_entries.ConfigFlow,
-    domain=DOMAIN):
+    ConfigFlow,
+    domain=DOMAIN
+):
 
     VERSION = 2
     MINOR_VERSION = 2
@@ -20,8 +26,9 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
     def __init__(self):
         self.api_key = None
 
-    def get_river_api_schema(self):
-        schema = vol.Schema({
+    def get_api_schema(self) -> vol.Schema:
+        """Returns the Schema for forms where an API key is required"""
+        return vol.Schema({
             vol.Required("api_key"): selector.TextSelector(
                 selector.TextSelectorConfig(
                     type=selector.TextSelectorType.PASSWORD
@@ -29,32 +36,30 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
             ),
         })
 
-        return schema
-
-    def get_river_list_schema(self, options):
-        schema = vol.Schema(
+    def get_river_list_schema(self, options) -> vol.Schema:
+        """Returns the schema for the river selection form"""
+        return vol.Schema(
             {
                 vol.Required("station"): vol.In(options)
             }
         )
-        return schema
 
-    def get_menu_options(self):
-        return {
-            "riverlevel": "River Level Sensor",
-            "floodalert": "Flood Alert Sensor"
-        }
+    def get_initial_menu_options(self) -> List[str]:
+        """Returns the initial options the user is to select"""
+        return ["riverlevel", "floodalert"]
 
     async def fetch_station_data(self, api_key: str) -> dict:
+        """This gets a list of stations using the API key provided"""
         session = async_get_clientsession(self.hass)
         url = f"{API_BASE_URL}{API_STATIONDATA_EP}"
         response = await session.get(
             url,
             headers={"Ocp-Apim-Subscription-Key": api_key}
         )
+
         if response.status == 200:
             self.api_key = api_key
-            station_data = await self.get_river_stations(
+            station_data = await self.filter_river_stations(
                 await response.json()
             )
             device_reg = dr.async_get(self.hass)
@@ -80,12 +85,15 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                 raise CannotConnect(f"API rate limit exceeded: {msg}")
             else:
                 raise CannotConnect("unknown")
+        elif response.status == 429:
+            msg = (await response.json()).get("message", "")
+            raise CannotConnect(f"API rate limit exceeded: {msg}")
         else:
             raise CannotConnect("unknown")
 
-    async def get_river_stations(self, response):
+    async def filter_river_stations(self, response) -> List[Dict[str, Any]]:
+        """Filters the list of stations from NRW for rivers only"""
         station_key = "titleEn"
-
         stations = []
 
         for station in response:
@@ -109,17 +117,19 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
         stations = sorted(stations, key=lambda x: x["title"])
         return stations
 
-
     async def async_step_user(self, user_input=None):
+        """The initial form when setting the integration up"""
         return self.async_show_menu(
             step_id="user",
-            menu_options=self.get_menu_options()
+            menu_options=self.get_initial_menu_options()
         )
 
     async def async_step_floodalert(self, user_input=None):
+        """The form to setup flood alert section of integration"""
         return self.async_abort(reason="feature_not_implemented")
 
     async def async_step_riverlevel(self, user_input=None):
+        """Chooses whether to show API connection/river select form"""
         try:
             if self.api_key is None:
                 for entry in self.hass.config_entries.async_entries(DOMAIN):
@@ -131,19 +141,19 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                             step_id="select_station",
                             data_schema=schema
                         )
-            schema = self.get_river_api_schema()
+            schema = self.get_api_schema()
             return self.async_show_form(
                 step_id="add_river_api",
                 data_schema=schema
             )
         except Exception as e:
-            errors = {"base": str(e)}
             _LOGGER.warning(
-                f"Error during config flow setup: {e}"
+                f"Error during config flow setup: {str(e)}"
             )
             return self.async_abort(reason="config_flow_failed")
 
     async def async_step_add_river_api(self, user_input=None):
+        """Form where the user adds the river API connection"""
         if user_input is not None:
             try:
                 stations = await self.fetch_station_data(
@@ -156,7 +166,7 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                 )
             except Exception as e:
                 errors = {"base": str(e)}
-                schema = self.get_river_api_schema()
+                schema = self.get_api_schema()
                 return self.async_show_form(
                     step_id="add_river_api",
                     data_schema=schema,
@@ -164,6 +174,7 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                 )
 
     async def async_step_select_station(self, user_input=None):
+        """Form where the user selects the river station to monitor"""
         if user_input is not None:
             try:
                 station = int(
@@ -188,20 +199,20 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                     "stations": [station]
                 }
                 return self.async_create_entry(
-                    title = f"River Levels ({self.api_key[-5:]})",
+                    title=f"River Levels ({self.api_key[-5:]})",
                     data=new_data,
                 )
             except Exception as e:
-                errors = {"base": str(e)}
                 _LOGGER.warning(
-                    f"Error during config flow setup: {e}"
+                    f"Error during config flow setup: {str(e)}"
                 )
                 return self.async_abort(reason="config_flow_failed")
 
     async def async_step_reauth(
         self,
-        entry_data: Mapping[str, Any]
-        ) -> ConfigFlowResult:
+        entry_data: Mapping[str, Any],
+    ) -> ConfigFlowResult:
+        """Sends to reauth form when the API key no longer valid"""
 
         return await self.async_step_reauth_confirm()
 
@@ -209,11 +220,12 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
         self,
         user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        """Handles reauthentication when API key no longer valid"""
 
         self._get_reauth_entry()
         entry = self._get_reauth_entry()
 
-        schema = vol.Schema (
+        schema = vol.Schema(
             {
                 vol.Required("api_key"): selector.TextSelector(
                     selector.TextSelectorConfig(
@@ -226,7 +238,7 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
             return self.async_show_form(
                 step_id="reauth_confirm",
                 data_schema=schema
-        )
+            )
 
         self.api_key = user_input["api_key"]
 
@@ -243,7 +255,7 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
                     self.async_update_reload_and_abort(
                         entry,
                         data=updated_data,
-                        title = f"River Levels ({self.api_key[-5:]})",
+                        title=f"River Levels ({self.api_key[-5:]})",
                     )
                     return self.async_abort(reason="reauth_successful")
                 elif response.status == 401:
@@ -256,6 +268,5 @@ class NaturalResourcesWalesRiverLevelsConfigFlow(
             return self.async_show_form(
                 step_id="reauth_confirm",
                 data_schema=schema,
-                errors={"base": str(e)},
+                errors=errors,
             )
-

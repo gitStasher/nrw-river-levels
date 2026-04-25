@@ -1,5 +1,6 @@
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.device_registry as dr
+from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN
 from homeassistant.const import Platform
@@ -13,6 +14,7 @@ PLATFORMS = [
         Platform.BINARY_SENSOR,
         Platform.DEVICE_TRACKER
 ]
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
@@ -31,6 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     return True
 
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     unload_ok = await hass.config_entries.async_unload_platforms(
@@ -39,6 +42,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok
+
 
 async def async_migrate_entry(
     hass: HomeAssistant, config_entry: ConfigEntry
@@ -87,3 +91,25 @@ async def async_migrate_entry(
         )
         return True
 
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    device_entry: DeviceEntry
+) -> bool:
+    """Allows user to delete device"""
+    station_id = next(
+            (ident[1] for ident in device_entry.identifiers
+             if len(ident) == 2 and ident[0] == DOMAIN),
+            None
+        )
+    if station_id is not None and station_id in entry.data["stations"]:
+        new_stations = [s for s in entry.data["stations"] if s != station_id]
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, "stations": new_stations}
+        )
+        await hass.config_entries.async_reload(entry.entry_id)
+        return True
+
+    return False

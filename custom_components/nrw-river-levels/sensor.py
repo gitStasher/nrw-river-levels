@@ -1,9 +1,9 @@
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, DEVICE_MANUFACTURER, DEVICE_MODEL
 from homeassistant.components.sensor import (
     SensorEntity,
-    SensorDeviceClass,
-    SensorStateClass
+    SensorDeviceClass
 )
 from .coordinator import NaturalResourcesWalesCoordinator
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import logging
 from datetime import datetime
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -26,13 +27,16 @@ async def async_setup_entry(
         entities.append(RiverLevelStatusSensor(coordinator, station_id))
     async_add_entities(entities)
 
+
 class RiverLevelSensor(
     CoordinatorEntity[NaturalResourcesWalesCoordinator],
-    SensorEntity):
+    SensorEntity
+):
     def __init__(
         self,
         coordinator: NaturalResourcesWalesCoordinator,
-        station_id: int) -> None:
+        station_id: int
+    ) -> None:
         super().__init__(coordinator)
         self._attr_device_class = SensorDeviceClass.DISTANCE
         self._attr_native_unit_of_measurement = UnitOfLength.METERS
@@ -74,6 +78,7 @@ class RiverLevelSensor(
             "manufacturer": DEVICE_MANUFACTURER,
             "model": DEVICE_MODEL
         }
+
 
 class RiverLevelLastUpdatedSensor(
     CoordinatorEntity[NaturalResourcesWalesCoordinator],
@@ -123,6 +128,7 @@ class RiverLevelLastUpdatedSensor(
             "manufacturer": DEVICE_MANUFACTURER,
             "model": DEVICE_MODEL
         }
+
 
 class RiverLevelStatusSensor(
     CoordinatorEntity[NaturalResourcesWalesCoordinator],

@@ -6,12 +6,14 @@ from homeassistant.components.binary_sensor import (
 from .coordinator import NaturalResourcesWalesCoordinator
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     entities = []
     for station_id in entry.data.get("stations", []):
         entities.append(StationStatusSensor(coordinator, station_id))
     async_add_entities(entities)
+
 
 class StationStatusSensor(
     CoordinatorEntity[NaturalResourcesWalesCoordinator],

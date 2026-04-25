@@ -5,6 +5,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import logging
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     entities = []
@@ -12,16 +13,18 @@ async def async_setup_entry(hass, entry, async_add_entities):
         entities.append(StationDeviceTracker(coordinator, station_id))
     async_add_entities(entities)
 
+
 class StationDeviceTracker(
     CoordinatorEntity[NaturalResourcesWalesCoordinator],
-    TrackerEntity):
+    TrackerEntity
+):
     def __init__(
         self,
         coordinator: NaturalResourcesWalesCoordinator,
         station_id: int,
-        ) -> None:
-            super().__init__(coordinator)
-            self.station_id = station_id
+    ) -> None:
+        super().__init__(coordinator)
+        self.station_id = station_id
 
     @property
     def unique_id(self):

@@ -1,3 +1,9 @@
+## 0.0.6
+
+* Introduced ability to delete devices from config entries
+* Refactored some code
+* Fixed an API rate limit issue where the warning would not be correctly displayed
+
 ## 0.0.5
 
 ### Bug Fixes
